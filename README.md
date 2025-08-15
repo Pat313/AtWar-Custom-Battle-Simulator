@@ -37,7 +37,7 @@ It has the default sim units and the existing game strategies/upgrades by defaul
 
 ## Getting Started
 
-1. Open `sim.html` in a web browser to run the simulator.  
+1. Open `index.html` in a web browser to run the simulator.  
 2. Alternatively, you can host it locally using:
    - Node.js
    - PHP
