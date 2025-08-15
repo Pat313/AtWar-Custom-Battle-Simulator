@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Battle Simulator</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/sim.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+  <!-- Header bar -->
+  <header id="header-bar">
+    <h1>Custom Battle Simulator</h1>
+  </header>
+
+  <!-- Main layout: left = units, middle = stacks, right = controls + results -->
+  <div class="container">
+    <!-- Units list -->
+    <div id="units-container">
+      <h2>Available Units</h2>
+      <ul id="units-list"></ul>
+    </div>
+
+    <!-- Stacks (scrollable) -->
+    <div id="stack-container">
+      <h2>Your Stacks</h2>
+      <!-- Add stack INSIDE this panel; keeps behavior because class is the same -->
+      <button id="add-stack-button" class="stack-add">+ Add New Stack</button>
+    </div>
+
+    <!-- Right column: run controls + results -->
+    <div id="right-panel">
+      <div id="right-controls">
+        <label for="times" class="control-label">Number of Simulations</label>
+        <input type="number" id="times" value="10000" min="1" />
+        <button id="submit-button">Run Simulation</button>
+<span id="loading-icon" style="display:none;">
+  <img src="https://icon-library.com/images/spinner-icon-gif/spinner-icon-gif-1.jpg" title="Running simulation…" />
+</span>
+      </div>
+
+      <pre id="battle-results">Simulation Result:</pre>
+    </div>
+  </div>
+
+  <!-- Templates (kept identical so JS behavior stays intact) -->
+  <template id="unitrow-template">
+    <tr data-unitid="$id">
+      <td><input type="number" class="quantity-cell" value="$count" min="1"></td>
+      <td><img src="$image" draggable="true" data-unitid="$id"> $name</td>
+      <td class="attack-cell">$attack</td>
+      <td class="defence-cell">$defence</td>
+      <td class="hp-cell">$hp</td>
+      <td class="critical-cell">$critical</td>
+      <td class="defbonus-cell"><span class="v-mid">$defbonus</span></td>
+    </tr>
+  </template>
+
+  <template id="defbonus-template">
+    <span class="defbonus-item">
+      <img src="$image" title="$name"> ($bonus)
+    </span>
+  </template>
+
+  <template id="stack-template">
+  <div class="stack" data-name="$name">
+    <span class="stack-title">$name</span>
+    <span class="stack-delete">X</span>
+
+    <!-- top row: check-boxes -->
+    <div class="stack-options-top">
+      <label><input type="checkbox" name="is-defending"> Defending</label>
+      <label><input type="checkbox" name="in-city" disabled> In City</label>
+      <label><input type="checkbox" name="in-defence-line" disabled> In Defence Line</label>
+      <label class="stack-option"><input type="checkbox" name="enable-upgrades" checked> Enable upgrades</label>
+      <span class="gear-icon" title="Customize upgrades">⚙️</span>
+    </div>
+
+<!-- modal panel -->
+<div class="upgrade-modal" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">Choose Upgrades</span>
+      <button class="modal-close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="upgrade-list">
+        <div class="upgrade-group">
+  <h3>
+    Global
+    <input type="checkbox" class="select-all-global" title="Select all/deselect all" checked>
+  </h3>
+  <div class="upgrade-items global-upgrades"></div>
+</div>
+
+<div class="upgrade-group">
+  <h3>
+    General
+    <input type="checkbox" class="select-all-general" title="Select all/deselect all" checked>
+  </h3>
+  <div class="upgrade-items general-upgrades"></div>
+</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-apply">Apply</button>
+    </div>
+  </div>
+</div>
+
+    <!-- second row: selects -->
+    <div class="stack-options-bottom">
+      <label>Strategy:
+        <select class="select2-strategies" name="strategy" style="width:150px;"></select>
+      </label>
+      <label>Allies:
+        <select class="select2-allies" multiple="multiple" style="width:200px;"></select>
+      </label>
+    </div>
+
+    <!-- table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Quantity</th>
+          <th>Name</th>
+          <th>Attack</th>
+          <th>Defense</th>
+          <th>HP</th>
+          <th>Crit.</th>
+          <th>Defense&nbsp;Bonus</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</template>
+
+  <!-- Scripts (unchanged) -->
+  <script src="scripts/units.js"></script>
+  <script src="scripts/strats.js"></script>
+  <script src="scripts/generalUpgrades.js"></script>
+  <script src="scripts/upgrades.js"></script>
+  <script src="scripts/buildingBonus.js"></script>
+  <script src="scripts/sim.js"></script>
+</body>
+</html>

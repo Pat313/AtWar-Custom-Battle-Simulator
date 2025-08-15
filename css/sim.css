@@ -1,0 +1,529 @@
+/* ===== Global reset & base ===== */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #1e1f1b;
+}
+body {
+  font-family: Arial, sans-serif;
+  color: #e6e6e6; /* near-white for readability */
+  background-image:
+    linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)),
+    url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+}
+
+/* ===== Header ===== */
+#header-bar {
+  background-color: #191b15;
+  border-bottom: 2px solid #4b5320;
+  padding: 14px 20px;
+}
+#header-bar h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #c7d7a5;
+  text-transform: uppercase;
+}
+
+/* ===== 3-column layout ===== */
+.container {
+  display: grid;
+  grid-template-columns: 240px 1fr 250px;
+  gap: 16px;
+  padding: 16px;
+  align-items: start; /* keep top-aligned so nothing stacks vertically */
+}
+
+/* ===== Panels ===== */
+.panel {
+  border: 1px solid #3f4238;
+  background-color: #2b2d26;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.45);
+}
+
+/* Left: Units */
+#units-container {
+  composes: panel;
+  border: 1px solid #46493e;
+  background-color: #2c2f27;
+  padding: 10px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+#units-container h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+  color: #a8c686;
+}
+#units-container ul { list-style: none; padding: 0; margin: 0; }
+#units-container li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #3b3d35;
+  cursor: grab;
+}
+#units-container li:hover { background-color: rgba(255,255,255,0.05); }
+#units-container img { width: 40px; height: 40px; }
+
+/* Middle: Stacks (scrollable) */
+#stack-container {
+  border: 1px solid #46493e;
+  background-color: #2b2d26;
+  padding: 10px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#stack-container h2 {
+  font-size: 14px;
+  margin: 0 0 6px;
+  color: #a8c686;
+}
+#stack-container .stack { order: 0; }       /* ensures button stays last */
+#add-stack-button { order: 9999; }          /* always below the stacks */
+
+/* Stack card */
+.stack {
+  border: 1px solid #56594c;
+  background-color: #33352d;
+  padding: 10px;
+  position: relative;
+}
+.stack-title {
+  font-weight: bold;
+  color: #e0e0c6;
+}
+.stack table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.stack th, .stack td {
+  border: 1px solid #444;
+  padding: 6px;
+  text-align: left;
+}
+
+/* Delete "X" — subtle enlarge (no spin) */
+.stack-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #ff6b6b;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.stack-delete:hover {
+  transform: scale(1.25);
+  color: #ff8989;
+}
+
+.defbonus-item img,
+.stack .defbonus-cell img {
+  width: 40px !important;
+  height: 27px !important;
+  object-fit: cover;
+}
+
+/* Add New Stack (inside middle panel) */
+#add-stack-button {
+  margin-top: 4px;
+  align-self: center;
+  background-color: #4b5320;
+  border: 1px solid #6a7440;
+  color: #e6e6e6;
+  padding: 8px 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+#add-stack-button:hover {
+  transform: translateY(-1px);
+  background-color: #5d6630;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+/* Right side: controls + results in a column */
+#right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0; /* prevents overflow in grid */
+}
+#right-controls {
+  border: 1px solid #46493e;
+  background-color: #2b2d26;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#battle-results {
+  border: 1px solid #46493e;
+  background-color: #2b2d26;
+  padding: 10px;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.45);
+}
+
+/* ===== Unified control styling (inputs, selects, checkboxes) ===== */
+input[type="number"],
+input[type="text"],
+select {
+  background-color: #1e1f1b;
+  border: 1px solid #595c50;
+  color: #e6e6e6;
+  padding: 6px 8px;
+  border-radius: 6px;
+  outline: none;
+  min-height: 32px;
+}
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus {
+  border-color: #7f8f4a;
+  box-shadow: 0 0 0 2px rgba(127,143,74,0.25);
+}
+
+/* Native select dropdown arrow (for any non-Select2 selects) */
+select {
+  appearance: none;
+  padding-right: 28px;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='%23e6e6e6'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+/* Custom checkboxes (dark theme) */
+input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #6a6d5f;
+  background-color: #1e1f1b;
+  border-radius: 3px;
+  margin-right: 6px;
+  position: relative;
+  vertical-align: middle;
+  cursor: pointer;
+}
+input[type="checkbox"]:hover {
+  border-color: #8b9560;
+}
+input[type="checkbox"]:checked {
+  background-color: #4b5320;
+  border-color: #8b9560;
+  box-shadow: 0 0 0 1px #8b9560 inset;
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: 2px solid #e6e6e6;
+  border-left: 0;
+  border-top: 0;
+  transform: rotate(45deg);
+}
+
+/* Select2 dark theme overrides */
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+  background-color: #1e1f1b !important;
+  border: 1px solid #595c50 !important;
+  color: #e6e6e6 !important;
+  min-height: 32px;
+  border-radius: 6px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  color: #e6e6e6 !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: #e6e6e6 transparent transparent transparent !important;
+}
+.select2-dropdown {
+  background-color: #2b2d26 !important;
+  border: 1px solid #595c50 !important;
+}
+.select2-results__option { color: #e6e6e6 !important; }
+.select2-results__option--highlighted { background-color: #4b5320 !important; }
+
+/* already-selected item: darker green */
+.select2-container--default .select2-results__option--selected {
+    background-color: #2d3a10 !important;   /* darker than #4b5320 */
+    color: #e6e6e6 !important;
+}
+
+/* keep the lighter green for hover/focus */
+.select2-container--default .select2-results__option--highlighted {
+    background-color: #4b5320 !important;
+    color: #e6e6e6 !important;
+}
+
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple,
+.select2-allies + .select2-container--default .select2-selection--multiple,   /* allies multi-select */
+.select2-allies + .select2-container--default .select2-selection--single {
+  background-color: #1e1f1b !important;
+  border: 1px solid #595c50 !important;
+  color: #e6e6e6 !important;
+  border-radius: 6px !important;
+  min-height: 32px;
+}
+
+/* choices (pills) */
+.select2-container--default .select2-selection__choice,
+.select2-allies + .select2-container--default .select2-selection__choice {
+  background-color: #4b5320 !important;
+  color: #e6e6e6 !important;
+  border: 1px solid #6a7440 !important;
+}
+
+/* drop-down list */
+.select2-dropdown,
+.select2-allies + .select2-container--default .select2-dropdown {
+  background-color: #2b2d26 !important;
+  border: 1px solid #595c50 !important;
+}
+
+.select2-results__option {
+  color: #e6e6e6 !important;
+}
+.select2-results__option--highlighted {
+  background-color: #4b5320 !important;
+}
+.select2-results__option--selected {
+  background-color: #2d3a10 !important;
+}
+
+/* Buttons (right controls) */
+#submit-button {
+  background-color: #4b5320;
+  border: 1px solid #6a7440;
+  color: #e6e6e6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+#submit-button:hover { background-color: #5d6630; transform: translateY(-1px); }
+
+.control-label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background-color: #4b5320; border-radius: 4px; }
+::-webkit-scrollbar-track { background-color: #1e1f1b; }
+
+/* Colors helpers used by sim.js output */
+.green { color: #a8c686; }
+.lightred { color: #ff6666; }
+.dark.mini { font-size: 0.8em; color: #bdbdbd; }
+
+.stack-options-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stack-options-bottom label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.stack-options-bottom {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.stack-options-bottom label {
+  flex: 1 1 45%;
+  min-width: 140px;
+}
+
+.stack table th,
+.stack table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 6px 4px;
+}
+
+/* left-aligned columns */
+.stack table th:nth-child(2),
+.stack table td:nth-child(2),
+.stack table th:nth-child(7),
+.stack table td:nth-child(7) {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.stack tbody tr {
+  line-height: 40px;   /* 40 px ≈ icon height; adjust to your actual img height */
+}
+
+.stack td:nth-child(2),
+.stack td:nth-child(7) {
+  vertical-align: middle;
+  padding: 0 6px;      /* keep horizontal padding, kill vertical padding */
+}
+
+.stack td:nth-child(2) img,
+.stack td:nth-child(7) img {
+  vertical-align: middle;
+width: 40px;
+  height: 27px;
+}
+
+.stack .quantity-cell {
+  width: 45px;
+  text-align: center;
+}
+
+#units-list img {
+  width: 40px;
+  height: 27px;
+  object-fit: cover;
+  display: block;
+}
+
+#loading-icon img {
+  width: 22px;
+  height: 22px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Modal backdrop */
+.upgrade-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Modal card */
+.modal-card {
+    width: 420px;
+    max-height: 70vh;
+    background: #2b2d26;
+    border: 1px solid #46493e;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Modal header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #3f4238;
+    font-weight: 600;
+}
+
+/* Close button */
+.modal-close {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.modal-close:hover {
+    transform: scale(1.2);
+}
+
+/* Modal body */
+.modal-body {
+    flex: 1 1 auto;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 12px;
+    text-align: center;
+}
+
+/* Apply button */
+.btn-apply {
+    background: #4b5320;
+    border: 1px solid #6a7440;
+    color: #e6e6e6;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.btn-apply:hover {
+    transform: translateY(-1px);
+    background: #5d6630;
+}
+
+.gear-icon,
+.gear-icon img,
+.upgrade-desc-toggle {
+  cursor: pointer;
+}
+
+.upgrade-item {
+  display: flex;                /* overall column */
+  flex-direction: column;
+  border-bottom: 1px solid #3f4238;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.upgrade-row {                 /* the single line with image / name / checkbox / info */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upgrade-row img {
+  width: 40px;
+  height: 27px;
+  object-fit: cover;
+}
+
+.upgrade-desc {
+  margin-top: 4px;
+  font-size: 0.9em;
+  color: #999;
+  display: none;               /* hidden by default */
+}
+
+.upgrade-desc.show {
+  display: block;              /* toggled by JS */
+}
