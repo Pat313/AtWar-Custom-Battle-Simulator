@@ -26,10 +26,12 @@ Contains 6 script files:
 Contains image assets:
 
 - `units/` – Images of units for custom maps.
-- `strats/` – Images for strategies.
+- `strats/` – Images of strategies.
 
 You can create subfolders for organization, e.g., `img/units/IHYmap/`.  
 When referencing these images in your scripts, use the correct relative path, e.g., `img/units/IHYmap/example.png`.
+
+It has the default sim units and the existing game strategies/upgrades by default, although you can modify these as well.
 
 ---
 
@@ -43,7 +45,7 @@ When referencing these images in your scripts, use the correct relative path, e.
    - Ruby
    - VSCode (Live Server)
 
-> The simulator works completely offline.
+> The simulator does not work offline as it relies on the API.
 
 ---
 
