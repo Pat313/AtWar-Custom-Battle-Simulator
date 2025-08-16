@@ -17,13 +17,22 @@
     <h1>Custom Battle Simulator</h1>
   </header>
 
+<!-- ===== NAVBAR ===== -->
+<nav id="top-nav">
+  <div class="nav-inner">
+  <button id="settings-button" class="btn-apply">Settings ⚙️</button>
+  <label id="unit-set-label">Unit Set:</label>
+  <select id="unit-set-picker" class="select2-unit-sets" style="width:160px;"></select>
+    </div>
+</nav>
+
   <!-- Main layout: left = units, middle = stacks, right = controls + results -->
   <div class="container">
     
     <!-- Units list -->
     <div id="units-container">
       <div id="units-list-header">
-  <input type="text" id="units-list-search" placeholder="🔍 Search units..." />
+        <input type="text" id="units-list-search" placeholder="🔍 Search units..." />
 </div>
       <ul id="units-list"></ul>
     </div>
@@ -31,7 +40,6 @@
     <!-- Stacks (scrollable) -->
     <div id="stack-container">
       <div id="stack-header">
-  <button id="settings-button" class="btn-apply">Settings ⚙️</button>
 </div>
       <!-- Add stack INSIDE this panel; keeps behavior because class is the same -->
       <button id="add-stack-button" class="stack-add">+ Add New Stack</button>
@@ -165,8 +173,19 @@
   </div>
 </div>
 
-  <!-- scripts -->
-  <script src="scripts/units.js"></script>
+<!-- unit loader -->
+<script src="units/index.js"></script>
+<script src="scripts/unitLoader.js"></script>
+<script>
+  const file = localStorage.getItem('aw_unitsFile') || '_Default Units.js';
+  const script = document.createElement('script');
+  script.id = 'units-script';
+  script.src = 'units/' + encodeURIComponent(file);
+  script.type = 'text/javascript';
+  document.head.appendChild(script);
+</script>
+
+<!-- other scripts -->
   <script src="scripts/strats.js"></script>
   <script src="scripts/generalUpgrades.js"></script>
   <script src="scripts/upgrades.js"></script>

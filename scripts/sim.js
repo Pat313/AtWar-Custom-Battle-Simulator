@@ -12,7 +12,7 @@ var ALL_UNITS_KEY          = localStorage.getItem('aw_unitsKey') || '*';
 	var currentStacks = {};
 	var currentStackNum = 1;
 
-	var generalId = null;
+	var generalIds = [];
 	//var unitBeingDragged = null;
 
 	function replaceAll(string, variables) {
@@ -85,7 +85,9 @@ $('#loading-icon').show();          // show spinner
 
             var stratId = $(stack).find('.select2-strategies').val();
             var currentStrategy = strats[stratId];
-            var hasGeneral = stack.querySelector('tr[data-unitid="' + generalId + '"]');
+            var hasGeneral = stack.querySelectorAll('tbody tr')
+                        .length && Array.from(stack.querySelectorAll('tbody tr'))
+                        .some(tr => generalIds.includes(tr.dataset.unitid));
 
             stack.querySelectorAll('tbody tr').forEach(function (unitRow) {
                 var unitId = unitRow.dataset.unitid;
@@ -458,7 +460,8 @@ improvement.defbonus.forEach(function (bonus) {
 	var currentStrategy = strats[stratId];
 	var isInCity = stackNode.find('input[name="in-city"]')[0].checked;
 	var isInDefenceLine = stackNode.find('input[name="in-defence-line"]')[0].checked;
-	var hasGeneral = Boolean(currentStack.units[generalId]);
+	var hasGeneral = Object.keys(currentStacks[stackName].units)
+                      .some(id => generalIds.includes(id));
 	var enableUpgrades = stackNode.find('input[name="enable-upgrades"]')[0].checked;
 
 	// Before refreshing, save unit count.
@@ -586,10 +589,10 @@ chosenUpgrades.forEach(key => {
 		$defence: selectedUnit.max_defence,
 		$hp: selectedUnit.hp,
 		$count:
-  (generalId === unitId ||
-   (units[unitId].unit_role_id || '').indexOf('building') === 0)
-  ? 1
-  : (DEFAULT_COUNT_OF_UNITS),
+(generalIds.includes(unitId) ||
+ (units[unitId].unit_role_id || '').indexOf('building') === 0)
+? 1
+: DEFAULT_COUNT_OF_UNITS,
 		$critical: selectedUnit.crit,
 		$defbonus: defbonus,
 	});
@@ -833,16 +836,13 @@ $('.select2-allies').each(function () {
 		addStack(); // Add initial stack 2
 	
 for (var unitId in units) {
-    var unit = units[unitId];
-    if (unit['unit_role_id'] === "player_general") {
-        generalId = unitId;
-        break;
+    if (units[unitId].unit_role_id === 'player_general') {
+        generalIds.push(unitId);
     }
 }
 	}
 
 	init();
-
     
 
 window.getUpgradeData = stackName => currentStacks[stackName];
@@ -853,7 +853,6 @@ window.getUpgradeData = stackName => currentStacks[stackName];
     };
 
     window.refreshUnitList = refreshUnitList;
-
 }
 
 // The require(['select2'], function () { ... }); part is typical for RequireJS.

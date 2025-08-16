@@ -1,12 +1,6 @@
-// Placeholder for the units. REPLACE THESE WITH YOUR ACTUAL DATA!
-var units = {
+window.units = {
 	"General": {
-		//
-		// You can either scrape the image from the game's website, or use your own images. 
-		// There's both examples seen below.
-		//
-		//image: "https://atwar-game.com/play/maps/map-1/units/100.jpg", // General image scraped from aw website
-		image: " img/units/general.jpg", // General image taken from the img folder
+		image: " img/units/general.jpg",
 		max_attack: 1,
 		max_defence: 1,
 		hp: 1,
