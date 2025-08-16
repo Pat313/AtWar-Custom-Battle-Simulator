@@ -1,8 +1,7 @@
 function initSimulator() {
-	var DEFAULT_COUNT_OF_UNITS = 5;
-	var BATTLE_SIMULATOR_URL =
-		'https://nnbu2q2491.execute-api.us-east-1.amazonaws.com/default/BattleRequest      ';
-	var ALL_UNITS_KEY = '*';
+var DEFAULT_COUNT_OF_UNITS = localStorage.getItem('aw_defaultCount') || 5;
+var BATTLE_SIMULATOR_URL   = 'https://nnbu2q2491.execute-api.us-east-1.amazonaws.com/default/BattleRequest';
+var ALL_UNITS_KEY          = localStorage.getItem('aw_unitsKey') || '*';
 
 	var unitTemplate = document.getElementById('unitrow-template');
 	var unitDefTemplate = document.getElementById('defbonus-template');
@@ -14,13 +13,13 @@ function initSimulator() {
 	var currentStackNum = 1;
 
 	var generalId = null;
-	var unitBeingDragged = null;
+	//var unitBeingDragged = null;
 
 	function replaceAll(string, variables) {
 		var keys = [];
 		for (var key in variables) {
 			if (variables.hasOwnProperty(key)) {
-				keys.push('\\' + key); // to escape the $ variable sign.
+				keys.push('\\' + key);
 			}
 		}
 		var re = new RegExp(keys.join('|'), 'gi');
@@ -36,7 +35,7 @@ function initSimulator() {
 	// Events
 
 	function onDragUnit(event) {
-		unitBeingDragged = event.target;
+		event.dataTransfer.setData('text/plain', this.dataset.unitid);
 	}
 
 	function onRemoveUnit(event) {
@@ -590,7 +589,7 @@ chosenUpgrades.forEach(key => {
   (generalId === unitId ||
    (units[unitId].unit_role_id || '').indexOf('building') === 0)
   ? 1
-  : DEFAULT_COUNT_OF_UNITS,
+  : (DEFAULT_COUNT_OF_UNITS),
 		$critical: selectedUnit.crit,
 		$defbonus: defbonus,
 	});
@@ -600,12 +599,12 @@ chosenUpgrades.forEach(key => {
 
 
 	function onDropUnit(event, target) {
-		event.preventDefault();
-		var stackName = event.currentTarget.dataset.name;
-		var unitId = unitBeingDragged.dataset.unitid;
-		currentStacks[stackName].units[unitId] = {};
-		refreshStack(stackName);
-	}
+  event.preventDefault();
+  const stackName = event.currentTarget.dataset.name;
+  const unitId = event.dataTransfer.getData('text/plain');
+  currentStacks[stackName].units[unitId] = {};
+  refreshStack(stackName);
+}
 
 	function onIsDefending(event) {
   // 1. ensure only one defending checkbox is active
@@ -715,28 +714,68 @@ stackNode.querySelector('input[name="is-defending"]')
 	function addInitialEventHandlers() {
     document.querySelector('.stack-add').addEventListener('click', addStack);
 
-    var unitsList = document.getElementById('units-list');
-    Object.keys(units)
-        .sort()                                    // alphabetical order
-        .forEach(function(unitId) {
-            var unit = units[unitId];
-            var listItem = document.createElement('li');
+    refreshUnitList();
 
-            var img = document.createElement('img');
-            img.src = unit.image;
-            img.draggable = true;
-            img.dataset.unitid = unitId;
-            img.title = unitId;
-            img.addEventListener('dragstart', onDragUnit);
-
-            listItem.appendChild(img);
-            listItem.appendChild(document.createTextNode(unitId));
-            unitsList.appendChild(listItem);
-        });
-
-document.getElementById('submit-button')
+    document.getElementById('submit-button')
         .addEventListener('click', onSubmit);
 }
+
+function refreshUnitList() {
+  const sortAlphabetically = localStorage.getItem('aw_sort') !== 'false';
+  const term = (window.unitSearchTerm || '').toLowerCase();
+  const list = document.getElementById('units-list');
+  list.innerHTML = '';
+
+  const buckets = { General: [], Ground: [], Naval: [], Air: [], Building: [], Other: [] };
+
+  Object.keys(units).forEach(id => {
+    const roleID = units[id].unit_role_id;
+    if (roleID === 'player_general')        buckets.General.push(id);
+    else if (roleID.startsWith('ground'))   buckets.Ground.push(id);
+    else if (roleID.startsWith('naval'))    buckets.Naval.push(id);
+    else if (roleID.startsWith('air'))      buckets.Air.push(id);
+    else if (roleID.startsWith('building')) buckets.Building.push(id);
+    else                                    buckets.Other.push(id);
+  });
+
+  if (sortAlphabetically) Object.keys(buckets).forEach(k => buckets[k].sort());
+
+  /* render groups */
+  Object.keys(buckets).forEach(groupName => {
+    const ids = buckets[groupName].filter(id => id.toLowerCase().includes(term));
+    if (!ids.length) return;
+
+    const liHeader = document.createElement('li');
+liHeader.className = 'group-header group-' + groupName.toLowerCase();
+liHeader.textContent = groupName;
+    list.appendChild(liHeader);
+
+    ids.forEach(unitId => {
+      const unit = units[unitId];
+      const li   = document.createElement('li');
+
+      const wrap = document.createElement('div');
+      wrap.draggable = true;
+      wrap.dataset.unitid = unitId;
+      wrap.style.cssText = 'cursor:grab;display:inline-flex;align-items:center';
+      wrap.addEventListener('dragstart', onDragUnit);
+
+      const img = document.createElement('img');
+      img.src = unit.image;
+      img.style.cssText = 'width:40px;height:27px;object-fit:cover;margin-right:8px';
+
+      wrap.appendChild(img);
+      wrap.appendChild(document.createTextNode(unitId));
+      li.appendChild(wrap);
+      list.appendChild(li);
+    });
+  });
+}
+
+$(document).off('input', '#units-list-search').on('input', '#units-list-search', function () {
+  window.unitSearchTerm = this.value.toLowerCase();
+  refreshUnitList();
+});
 
 	function addStack() {
     var name = 'Stack ' + currentStackNum;
@@ -804,86 +843,16 @@ for (var unitId in units) {
 
 	init();
 
-$(document).on('click', '.gear-icon', function () {
-    const $stack = $(this).closest('.stack');
-    const stackName = $stack.find('.stack-title').text();
-    const $modal = $stack.find('.upgrade-modal');
-    fillUpgradeModal($modal, stackName);
-    $modal.fadeIn(150);
-})
-  .on('click', '.modal-close', function () {
-    $(this).closest('.upgrade-modal').fadeOut(150);
-  })
-  .on('click', '.btn-apply', function () {
-  const $modal   = $(this).closest('.upgrade-modal');
-  const $stack   = $modal.closest('.stack');
-  const stackName = $stack.find('.stack-title').text();
+    
 
-  // collect separately
-  const chosenGlobals = $modal.find('.global-upgrades input[type=checkbox]:checked')
-                              .map((_, el) => el.value).get();
-  const chosenGenerals = $modal.find('.general-upgrades input[type=checkbox]:checked')
-                               .map((_, el) => el.value).get();
+window.getUpgradeData = stackName => currentStacks[stackName];
+    window.setUpgradeData = (stackName, globalUpgrades, generalUpgrades) => {
+        currentStacks[stackName].upgrades        = globalUpgrades;
+        currentStacks[stackName].generalUpgrades = generalUpgrades;
+        refreshStack(stackName);
+    };
 
-  currentStacks[stackName].upgrades = chosenGlobals;
-  currentStacks[stackName].generalUpgrades = chosenGenerals;
-
-  $modal.fadeOut(150);
-  refreshStack(stackName);
-})
-  .on('click', '.upgrade-desc-toggle', function () {
-    $(this).next('.upgrade-desc').slideToggle(150);
-});
-
-function fillUpgradeModal($modal, stackName) {
-    // If nothing was saved, default to all keys ON
-    const activeGlobals = currentStacks[stackName].upgrades || Object.keys(upgrades);
-    const activeGenerals = currentStacks[stackName].generalUpgrades || Object.keys(generalUpgrades);
-
-    // Helper to build HTML from a given object
-    function buildList(sourceObj, activeKeys) {
-  return Object.keys(sourceObj).map(key => {
-    const item = sourceObj[key];
-    const img = item.image || 'https://dummyimage.com/40x27/8c8c8c/ffffff&text=error';
-    const desc = item.description || 'No description available.';
-    const checked = activeKeys.includes(key) ? 'checked' : '';
-
-    return `
-      <div class="upgrade-item">
-        <div class="upgrade-row">
-          <img src="${img}"">
-          <span>${key}</span>
-          <input type="checkbox" value="${key}" ${checked}>
-          <span class="upgrade-desc-toggle" title="Details">ℹ️</span>
-        </div>
-        <div class="upgrade-desc">${desc}</div>
-      </div>`;
-  }).join('');
-}
-
-$modal.find('.upgrade-desc-toggle').off('click').on('click', function () {
-  $(this).next('.upgrade-desc').slideToggle(150);
-});
-
-    // Populate the modal with global and general upgrades
-    $modal.find('.global-upgrades').html(buildList(upgrades, activeGlobals));
-    $modal.find('.general-upgrades').html(buildList(generalUpgrades, activeGenerals));
-
-$modal.off('click', '.upgrade-desc-toggle').on('click', '.upgrade-desc-toggle', function () {
-  $(this).closest('.upgrade-item').find('.upgrade-desc').slideToggle(150);
-});
-
-    // Attach event listeners to "Select All" checkboxes
-    $modal.on('change', '.select-all-global', function () {
-        const checked = $(this).is(':checked');
-        $modal.find('.global-upgrades input[type=checkbox]').prop('checked', checked);
-    });
-
-    $modal.on('change', '.select-all-general', function () {
-        const checked = $(this).is(':checked');
-        $modal.find('.general-upgrades input[type=checkbox]').prop('checked', checked);
-    });
-}
+    window.refreshUnitList = refreshUnitList;
 
 }
 

@@ -7,7 +7,7 @@
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/sim.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
@@ -19,15 +19,20 @@
 
   <!-- Main layout: left = units, middle = stacks, right = controls + results -->
   <div class="container">
+    
     <!-- Units list -->
     <div id="units-container">
-      <h2>Available Units</h2>
+      <div id="units-list-header">
+  <input type="text" id="units-list-search" placeholder="🔍 Search units..." />
+</div>
       <ul id="units-list"></ul>
     </div>
 
     <!-- Stacks (scrollable) -->
     <div id="stack-container">
-      <h2>Your Stacks</h2>
+      <div id="stack-header">
+  <button id="settings-button" class="btn-apply">Settings ⚙️</button>
+</div>
       <!-- Add stack INSIDE this panel; keeps behavior because class is the same -->
       <button id="add-stack-button" class="stack-add">+ Add New Stack</button>
     </div>
@@ -39,7 +44,7 @@
         <input type="number" id="times" value="10000" min="1" />
         <button id="submit-button">Run Simulation</button>
 <span id="loading-icon" style="display:none;">
-  <img src="https://icon-library.com/images/spinner-icon-gif/spinner-icon-gif-1.jpg" title="Running simulation…" />
+  <img src="UI/res/spinner-icon.gif" title="Running simulation…" />
 </span>
       </div>
 
@@ -80,7 +85,7 @@
       <span class="gear-icon" title="Customize upgrades">⚙️</span>
     </div>
 
-<!-- modal panel -->
+<!-- upgrade modal -->
 <div class="upgrade-modal" style="display:none;">
   <div class="modal-card">
     <div class="modal-header">
@@ -142,12 +147,34 @@
   </div>
 </template>
 
-  <!-- Scripts (unchanged) -->
+<!-- settings modal -->
+<div id="settings-modal" class="settings-modal" style="display:none">
+  <div class="modal-card">
+      <div class="modal-header">
+      <span class="modal-title">Choose Upgrades</span>
+      <button class="modal-close">×</button>
+    </div>
+      <div class="modal-body">
+        <label><input type="checkbox" class="sort-check"> Sort units alphabetically</label><br>
+        <label>Default unit count <input type="number" class="default-count" min="1"></label><br>
+        <label>All units key <input type="text" class="units-key"></label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-apply">Apply</button>
+      </div>
+  </div>
+</div>
+
+  <!-- scripts -->
   <script src="scripts/units.js"></script>
   <script src="scripts/strats.js"></script>
   <script src="scripts/generalUpgrades.js"></script>
   <script src="scripts/upgrades.js"></script>
   <script src="scripts/buildingBonus.js"></script>
   <script src="scripts/sim.js"></script>
+  
+  <!-- UI -->
+  <script src="UI/settings-modal.js"></script>
+  <script src="UI/upgrades-modal.js"></script>
 </body>
 </html>

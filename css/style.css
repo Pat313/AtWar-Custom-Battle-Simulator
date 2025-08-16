@@ -44,17 +44,64 @@ body {
 
 /* Left: Units */
 #units-container {
-  composes: panel;
   border: 1px solid #46493e;
   background-color: #2c2f27;
   padding: 10px;
   max-height: calc(100vh - 160px);
   overflow-y: auto;
 }
-#units-container h2 {
-  font-size: 14px;
-  margin: 0 0 8px;
-  color: #a8c686;
+/* Group header rows */
+#units-list li.group-header {
+  font-size: 1.1em;
+  font-weight: bold;
+  /* same grey as the section titles – adjust if your colour differs */
+  cursor: default;
+  margin-top: 8px;
+  list-style: none;
+  pointer-events: none;
+  /* kill any border / line */
+  border: none !important;
+  text-align: center;
+  display: block;      /* make it a block so it fills the <ul> */
+  width: 100%;
+}
+.group-header.group-general  { color: #27ae5f; }   /* green  */
+.group-header.group-ground   { color: #a65317; }   /* brown  */
+.group-header.group-naval    { color: #2549ac; }   /* dark blue */
+.group-header.group-air      { color: #31a5d6; }   /* light blue */
+.group-header.group-building { color: #e39612; }   /* orange-yellow */
+.group-header.group-other    { color: #d73e3e; }   /* red */
+#units-list img {
+  width: 40px;
+  height: 27px;
+  object-fit: cover;
+  display: block;
+}
+/* optional: tighten spacing above first header */
+#units-list li.group-header:first-child {
+  margin-top: 0;
+}
+/* header that sits above the unit list */
+#units-list-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0 0.6rem;
+  margin-bottom: 1rem;
+}
+
+#units-list-header #units-list-search {
+  flex: 1 1 auto;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  background: #2c2c2c;         /* dark input */
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+#units-list-header #units-list-search::placeholder {
+  color: #999;
 }
 #units-container ul { list-style: none; padding: 0; margin: 0; }
 #units-container li {
@@ -78,11 +125,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-#stack-container h2 {
-  font-size: 14px;
-  margin: 0 0 6px;
-  color: #a8c686;
 }
 #stack-container .stack { order: 0; }       /* ensures button stays last */
 #add-stack-button { order: 9999; }          /* always below the stacks */
@@ -179,6 +221,7 @@ body {
 /* ===== Unified control styling (inputs, selects, checkboxes) ===== */
 input[type="number"],
 input[type="text"],
+input[type="url"], 
 select {
   background-color: #1e1f1b;
   border: 1px solid #595c50;
@@ -186,10 +229,11 @@ select {
   padding: 6px 8px;
   border-radius: 6px;
   outline: none;
-  min-height: 32px;
+  min-height: 16px;
 }
 input[type="number"]:focus,
 input[type="text"]:focus,
+input[type="url"]:focus, 
 select:focus {
   border-color: #7f8f4a;
   box-shadow: 0 0 0 2px rgba(127,143,74,0.25);
@@ -402,13 +446,6 @@ width: 40px;
   text-align: center;
 }
 
-#units-list img {
-  width: 40px;
-  height: 27px;
-  object-fit: cover;
-  display: block;
-}
-
 #loading-icon img {
   width: 22px;
   height: 22px;
@@ -527,3 +564,15 @@ width: 40px;
 .upgrade-desc.show {
   display: block;              /* toggled by JS */
 }
+
+/* settings overlay */
+.settings-modal {
+  position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
