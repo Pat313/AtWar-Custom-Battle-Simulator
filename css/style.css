@@ -385,11 +385,10 @@ input[type="checkbox"]:checked::after {
 .lightred { color: #ff6666; }
 .dark.mini { font-size: 0.8em; color: #bdbdbd; }
 
-.stack-options-top {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+.stack-options-top .gear-icon,
+.stack-options-top .upgrade-count-label {
+    display: inline-flex;           /* keeps them on the same line */
+    align-items: center;            /* vertically centers both */
 }
 
 .stack-options-bottom label {
@@ -807,3 +806,16 @@ width: 40px;
 .tooltip-warning strong { color: #f39c12; }
 .tooltip-info strong { color: #3498db; }
 
+/* upgrade counter next to the gear icon */
+.upgrade-count-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #c7d7a5;
+    background: #1e1f1b;
+    border: 1px solid #595c50;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: 6px;
+    line-height: 1;
+     transform: translateY(-2px); 
+}

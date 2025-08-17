@@ -28,6 +28,8 @@ var ALL_UNITS_KEY          = localStorage.getItem('aw_unitsKey') || '*';
 	var generalIds = [];
 	//var unitBeingDragged = null;
 
+    var TOTAL_UPGRADES = 0;
+      
 	function replaceAll(string, variables) {
 		var keys = [];
 		for (var key in variables) {
@@ -536,6 +538,23 @@ chosenUpgrades.forEach(key => {
 	});
 }
 
+function refreshUpgradeLabel(stackName) {
+    const stackNode = document.querySelector(`.stack[data-name="${stackName}"]`);
+    if (!stackNode) return;
+
+    const data = currentStacks[stackName] || {};
+    const enabledCount = (data.upgrades        || []).length +
+                         (data.generalUpgrades || []).length;
+
+    const label = stackNode.querySelector('.upgrade-count-label');
+    TOTAL_UPGRADES = 
+        Object.keys(upgrades || {}).length +
+        Object.keys(generalUpgrades || {}).length;
+    if (label) {
+        label.textContent = `${enabledCount} / ${TOTAL_UPGRADES}`;
+    }
+}
+
 
 	function onUpgradesEnable(event) {
 		var stackName = $(event.currentTarget).parents('.stack').data('name');
@@ -811,6 +830,7 @@ $(document).off('input', '#units-list-search').on('input', '#units-list-search',
 
     refreshAllianceSelect();
     initStrategies($(stackNode).find('.select2-strategies'));
+    refreshUpgradeLabel(name);
     updateErrorBar(); 
 }
 
@@ -969,11 +989,12 @@ updateErrorBar(); // initial run
 
 
 window.getUpgradeData = stackName => currentStacks[stackName];
-    window.setUpgradeData = (stackName, globalUpgrades, generalUpgrades) => {
-        currentStacks[stackName].upgrades        = globalUpgrades;
-        currentStacks[stackName].generalUpgrades = generalUpgrades;
-        refreshStack(stackName);
-    };
+   window.setUpgradeData = (stackName, globalUpgrades, generalUpgrades) => {
+    currentStacks[stackName].upgrades        = globalUpgrades;
+    currentStacks[stackName].generalUpgrades = generalUpgrades;
+    refreshStack(stackName);
+    refreshUpgradeLabel(stackName);
+};
 
     window.refreshUnitList = refreshUnitList;
 }
