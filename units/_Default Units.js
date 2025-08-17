@@ -147,7 +147,7 @@ window.units = {
 		crit: 5,
 		unit_role_id: "building_other",
 		"defbonus": [
-			{ unit_id: "Sentry Plane", defbonus: 20 },
+			{ unit_id: "Destroyer", defbonus: 20 },
 		]
 	},
 	"Recruitment Center": {
