@@ -34,7 +34,7 @@ This is a heavily modified version of the official AtWar battle simulator. It wo
 
 ### Bookmarklet setup
 1. In your custom sim, navigate to `bookmarklet/` and open `exportUnits.txt`.
-2. Copy everything in side, carefully.
+2. Copy everything inside, carefully.
 3. Open your browser’s bookmarks bar.
 4. Right-click → **Add Page** (or Add Bookmark).
 5. Name it something like `"Export AtWar Units"`.
