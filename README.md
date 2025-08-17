@@ -32,7 +32,7 @@ This is a heavily modified version of the official AtWar battle simulator. It wo
 
 ## Downloading custom units
 
-# Bookmarklet setup
+### Bookmarklet setup
 1. In your custom sim, navigate to `bookmarklet/` and open `exportUnits.txt`.
 2. Copy everything in side, carefully.
 3. Open your browser’s bookmarks bar.
@@ -42,7 +42,7 @@ This is a heavily modified version of the official AtWar battle simulator. It wo
 7. Go to the front of the URL (home key) and paste `javascript:`.
 8. Save it.
 
-# Usage
+### Usage
 1. Go into any atwar map; either start it, join one, or be in the editor (lobby won't work).
 2. Click on the bookmarklet.
 3. Save it to your custom sim → `units/` folder.
