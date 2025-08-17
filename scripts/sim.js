@@ -12,6 +12,19 @@ var ALL_UNITS_KEY          = localStorage.getItem('aw_unitsKey') || '*';
 	var currentStacks = {};
 	var currentStackNum = 1;
 
+    var errorBar = document.getElementById('error-bar');
+    const ERROR_LEVELS = {
+    NO_DEFENDER   : { name: "No defending stack", icon:'fa-shield-halved',  msg:'None of the stacks are set to Defending. There may be slight inaccuracies in the calculation.', level:'warning' },
+    TOO_MANY_UNITS: { name: "Too many units", icon:'fa-users',          msg:"You've added more than 1000 units, consider reducing the number of simulations.", level:'warning' },
+    HIGH_SIMS     : { name: "High simulation count", icon:'fa-stopwatch',      msg:'Going above 10.000 number of simulations is not recommended. It will result in a longer calculation time.', level:'warning' },
+    LOW_SIMS      : { name: "Low simulation count", icon:'fa-chart-line',     msg:'Less than 1000 number of simulations increase the risk of inaccurate results.', level:'warning' },
+    EMPTY_STACK   : { name: "Stack(s) without units", icon:'fa-box-open',       msg:'One or more stacks have no units in them.', level:'info' },
+    NO_STRAT      : { name: "No strategy selected", icon:'fa-chess-board',    msg:'One or more stacks have no strategy selected.', level:'info' },
+    ALL_ALLIED    : { name: "Every stack is allied", icon:'fa-handshake',      msg:'The stacks are all allied to each other. This will confuse the simulator.', level:'error' },
+    TOO_FEW_STACKS: { name: "Too few stacks", icon:'fa-layer-group',    msg:"There's currently 1 or less stacks. Please add at least 2 stacks before running the simulation.", level:'info' },
+    BUILDING_NOT_DEFENDING: { name: "Buildings cannot attack", icon: 'fa-city', msg: "One or more stacks have building in them, while not set to Defending.", level: 'warning' },
+};
+
 	var generalIds = [];
 	//var unitBeingDragged = null;
 
@@ -27,6 +40,15 @@ var ALL_UNITS_KEY          = localStorage.getItem('aw_unitsKey') || '*';
 			return variables[matched];
 		});
 	}
+
+var allyMap = {};
+
+function updateAllyMap(stackName, allyName, add) {
+        if (!allyMap[stackName]) allyMap[stackName] = new Set();
+        if (!allyMap[allyName])  allyMap[allyName]  = new Set();
+        add ? allyMap[stackName].add(allyName) && allyMap[allyName].add(stackName)
+            : allyMap[stackName].delete(allyName) && allyMap[allyName].delete(stackName);
+    }
 
 	function renderTemplate(template, variables) {
 		return replaceAll(template.innerHTML, variables);
@@ -50,22 +72,7 @@ var ALL_UNITS_KEY          = localStorage.getItem('aw_unitsKey') || '*';
 
 		delete currentStacks[stackName].units[unitId];
 		refreshStack(stackName);
-	}
-
-	function createAllyMap() {
-		var allyMap = {};
-
-		stackContainer.querySelectorAll('.stack').forEach(function (stack) {
-			var name = stack.querySelector('.stack-title').innerHTML;
-			var allies = $(stack.querySelector('.select2-allies')).select2('data');
-
-			for (var idx = 0; idx < allies.length; idx++) {
-				var value = allies[idx].text;
-				allyMap[name + value] = true;
-				allyMap[value + name] = true;
-			}
-		});
-		return allyMap;
+         updateErrorBar();
 	}
 
 	function onSubmit() {
@@ -74,7 +81,6 @@ $('#loading-icon').show();          // show spinner
         var stacks = {};
         var times = Number(document.getElementById('times').value);
         var data = { times: times, stacks: stacks };
-        var allyMap = createAllyMap();
 
         stackContainer.querySelectorAll('.stack').forEach(function (stack) {
             var unitsMap = {};
@@ -231,23 +237,23 @@ $('#loading-icon').hide();       // hide on JS exception too
         return bonuses;
     }
 
-    /* 2. role-based bonuses – keep the existing loop unchanged */
+    /* 2. role-based bonuses */
     var attackers = [];
-    for (var unit in units) {
-        var currentUnit = units[unit];
-        if (
-            currentUnit['unit_role_id'] == defbonus['attacking_unit_role_id'] ||
-            unit == defbonus['attacking_unit_id']
-        ) {
-            attackers.push(units[unit]);
+    for (var unitId in units) {
+        var currentUnit = units[unitId];
+        if (unitId === defbonus.unit_id ||
+            currentUnit.unit_role_id === defbonus.unit_id) {
+            attackers.push(currentUnit);
         }
     }
-    $.each(attackers, function (index, attacker) {
+
+    attackers.forEach(function (attacker) {
+        var unitKey = Object.keys(units).find(key => units[key] === attacker);
         bonuses.push({
-            unit_id: attacker['unit_id'],
-            name: 'against ' + attacker.name,
-            image: attacker['image'],
-            defbonus: defbonus['defence_bonus'],
+            unit_id: unitKey,
+            name: 'against ' + unitKey,
+            image: attacker.image,
+            defbonus: Number(defbonus.defbonus || defbonus.defence_bonus)
         });
     });
 
@@ -301,46 +307,22 @@ $('#loading-icon').hide();       // hide on JS exception too
         );
     }
 
-    // -------------- DEFBONUS --------------
+// -------------- DEFBONUS --------------
 if (improvement.defbonus && improvement.defbonus.length) {
     var defcell = $(unitrow.find('.defbonus-cell'));
     defcell.empty();
+
     improvement.defbonus.forEach(function (bonus) {
-        if (bonus.unit_id === "in_own_city" || bonus.unit_id === "in_defence_line") {
-            createDefBonus(bonus).forEach(function (disp) {
-                defcell.append(
-                    renderTemplate(unitDefTemplate, {
-                        $name: disp.name,
-                        $image: disp.image,
-                        $bonus:
-                            '<span class="' +
-                            (disp.defbonus > 0 ? 'green' : 'lightred') +
-                            '">' +
-                            (disp.defbonus > 0 ? '+' : '') +
-                            disp.defbonus +
-                            '</span>'
-                    })
-                );
-            });
-        } else {
-            var label = 'against ' + bonus.unit_id;
-            var img = (units[bonus.unit_id] && units[bonus.unit_id].image);
-
-		defcell.append(
-                    renderTemplate(unitDefTemplate, {
-                        $name: label,
-                        $image: img,
-                        $bonus:
-                            '<span class="' +
-                            (bonus.defbonus > 0 ? 'green' : 'lightred') +
-                            '">' +
-                            (bonus.defbonus > 0 ? '+' : '') +
-                            bonus.defbonus +
-                            '</span>'
-                    })
-                );
-
-        }
+        var chips = createDefBonus(bonus);   // returns [] or 1-N chips
+        chips.forEach(function (chip) {
+            defcell.append(
+                renderTemplate(unitDefTemplate, {
+                    $name:  chip.name,
+                    $image: chip.image,
+                    $bonus: '<span class="' + (chip.defbonus > 0 ? 'green' : 'lightred') + '">' + (chip.defbonus > 0 ? '+' : '') + chip.defbonus + '</span>'
+                })
+            );
+        });
     });
 }
 
@@ -607,6 +589,7 @@ chosenUpgrades.forEach(key => {
   const unitId = event.dataTransfer.getData('text/plain');
   currentStacks[stackName].units[unitId] = {};
   refreshStack(stackName);
+   updateErrorBar();
 }
 
 	function onIsDefending(event) {
@@ -657,26 +640,21 @@ chosenUpgrades.forEach(key => {
 	}
 
 	function refreshAllianceSelect() {
-    var allyData = Object.keys(currentStacks).map(function (name) {
-        return { id: name, text: name };
-    });
-
     $('.stack').each(function () {
-        var $sel    = $(this).find('.select2-allies');
-        var selVals = $sel.val() || [];
-        var myName  = $(this).find('.stack-title').text();
-        var newData = allyData.filter(function (item) {
-            return item.text !== myName;
-        });
+        const myName = $(this).find('.stack-title').text();
+        const $sel   = $(this).find('.select2-allies');
 
-        // only touch it if it is already a Select2 instance
-        if ($sel.hasClass('select2-hidden-accessible')) {
-            $sel.select2('destroy');
-        }
+        /* 1. build the option list from *current* DOM stacks */
+        const others = Array.from(document.querySelectorAll('.stack'))
+                            .map(s => s.querySelector('.stack-title').textContent.trim())
+                            .filter(n => n !== myName);
 
-        $sel.empty()
-            .select2({ data: newData, placeholder: 'Click to add an ally stack' })
-            .val(selVals).trigger('change');
+        /* 2. replace options */
+        $sel.empty().append(others.map(n => new Option(n, n)));
+
+        /* 3. set current allies silently */
+        const current = Array.from(allyMap[myName] || []);
+        $sel.val(current).trigger('change.select2');
     });
 }
 
@@ -712,6 +690,36 @@ chosenUpgrades.forEach(key => {
 			.addEventListener('click', removeStack);
 stackNode.querySelector('input[name="is-defending"]')
      .addEventListener('change', onIsDefending);
+
+    const onAllyChange = function () {
+    const myName = $(this).closest('.stack').find('.stack-title').text();
+    const allies = new Set($(this).val() || []);
+
+    /* ---------- keep allyMap bidirectional ---------- */
+    // 1. remove old links that no longer exist
+    Object.keys(allyMap).forEach(stack => {
+        if (stack === myName) return;
+        if (allyMap[stack].has(myName) && !allies.has(stack)) {
+            allyMap[stack].delete(myName);
+        }
+    });
+
+    // 2. add new links
+    allies.forEach(a => {
+        if (!allyMap[a]) allyMap[a] = new Set();
+        allyMap[a].add(myName);
+    });
+
+    // 3. set own links
+    allyMap[myName] = allies;
+
+    refreshAllianceSelect();   // re-render combo-boxes
+    updateErrorBar();
+};
+
+    $(stackNode).find('.select2-allies')
+            .select2({ data: [], placeholder: 'Click to add an ally stack' })
+            .on('change', onAllyChange);
 	}
 
 	function addInitialEventHandlers() {
@@ -802,32 +810,41 @@ $(document).off('input', '#units-list-search').on('input', '#units-list-search',
     };
 
     refreshAllianceSelect();
-    initStrategies();
+    initStrategies($(stackNode).find('.select2-strategies'));
+    updateErrorBar(); 
 }
 
 function removeStack(evt) {
-    var stackNode = evt.currentTarget.closest('.stack'); // the .stack div
-    var name = stackNode.querySelector('.stack-title').innerHTML;
+    const stackNode = evt.currentTarget.closest('.stack');
+    const name = stackNode.querySelector('.stack-title').textContent.trim();
 
+    /* 0.  update the data model EARLY */
     delete currentStacks[name];
-    stackNode.remove();               // remove only this .stack
+
+    /* 1.  drop this name from every other stack’s allies */
+    $('.stack').each(function () {
+        const $sel = $(this).find('.select2-allies');
+        const val = $sel.val() || [];
+        const newVal = val.filter(n => n !== name);
+        $sel.val(newVal).trigger('change.select2');
+    });
+
+    /* 2.  remove the reverse links in allyMap */
+    Object.keys(allyMap).forEach(stack => allyMap[stack].delete(name));
+    delete allyMap[name];
+
+    /* 3.  remove the node itself */
+    stackNode.remove();
+
+    /* 4.  now refresh the selects with the correct list of stacks */
     refreshAllianceSelect();
+    updateErrorBar();
 }
 
-	function initStrategies() {
-    var stratOptions = $.map(strats, function (val, key) {
-        return { id: key, text: key };
-    });
-
-    var node = $('.select2-strategies').select2({ data: stratOptions });
-    node.on('change', onStratChange);
-    node.val('None').trigger('change');
-
-$('.select2-allies').each(function () {
-    $(this).select2({
-      placeholder: 'Click to add an ally stack'
-    });
-  });
+	function initStrategies($target) {
+    $target.select2({ data: $.map(strats, (v, k) => ({ id: k, text: k })) })
+           .val('None')
+           .trigger('change');
 }
 
 	function init() {
@@ -844,6 +861,112 @@ for (var unitId in units) {
 
 	init();
     
+
+    // -------------  ERROR BAR  -------------
+
+function updateErrorBar() {
+    // clear all icons
+    errorBar.innerHTML = '';
+
+    // 1. Defender check
+    const defendingStacks = Array.from(document.querySelectorAll('.stack'))
+                                 .filter(s => s.querySelector('input[name="is-defending"]').checked);
+    if (defendingStacks.length === 0) addIcon('NO_DEFENDER');
+
+    // 2. Total unit count
+    let totalUnits = 0;
+    document.querySelectorAll('.stack tbody tr').forEach(tr => {
+        totalUnits += Number(tr.querySelector('.quantity-cell').value || 0);
+    });
+    if (totalUnits > 1000) addIcon('TOO_MANY_UNITS');
+
+    // 3. Simulation count
+    const sims = Number(document.getElementById('times').value || 0);
+    if (sims > 10000) addIcon('HIGH_SIMS');
+    else if (sims < 1000) addIcon('LOW_SIMS');
+
+    // 4. Empty stacks
+    const emptyStacks = Array.from(document.querySelectorAll('.stack'))
+                             .filter(s => s.querySelectorAll('tbody tr').length === 0);
+    if (emptyStacks.length) addIcon('EMPTY_STACK');
+
+    // 5. No strategy
+    const noStratStacks = Array.from(document.querySelectorAll('.stack'))
+                           .filter(s => {
+                               const sel = s.querySelector('.select2-strategies');
+                               return sel && sel.value === 'None';
+                           });
+    if (noStratStacks.length) addIcon('NO_STRAT');
+
+    // 6. All stacks allied
+    const stackNames = Array.from(document.querySelectorAll('.stack'))
+                            .map(s => s.querySelector('.stack-title').textContent.trim());
+    const allAllied = stackNames.every(a =>
+        stackNames.every(b => a === b || allyMap[a + b])
+    );
+    if (stackNames.length > 1 && allAllied) addIcon('ALL_ALLIED');
+
+    // 7. Too few stacks
+    const stacksCount = document.querySelectorAll('.stack').length;
+    if (stacksCount <= 1) addIcon('TOO_FEW_STACKS');
+
+    // 8. Buildings not defending
+    // 8. Non-defending stacks with buildings
+document.querySelectorAll('.stack').forEach(stack => {
+    const isDefending = Array.from(stack.querySelectorAll('input[name="is-defending"]'))
+                             .some(input => input.checked);
+
+    if (!isDefending) {
+        const hasBuilding = Array.from(stack.querySelectorAll('tbody tr')).some(tr => {
+            const unitName = tr.querySelector('img[data-unitid]')?.dataset.unitid?.trim();
+            if (!unitName) return false;
+
+            const unit = units[unitName];  // your units object
+            return unit?.unit_role_id?.startsWith('building');
+        });
+
+        if (hasBuilding) addIcon('BUILDING_NOT_DEFENDING');
+    }
+});
+
+
+}
+
+function addIcon(key) {
+    const { icon, msg, level, name } = ERROR_LEVELS[key];
+
+    const label = name;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tooltip-wrapper';
+
+    const i = document.createElement('i');
+    i.className = `fa-solid ${icon} fa-icon`;
+    i.style.color = level === 'error'   ? '#e74c3c'
+                  : level === 'warning' ? '#f39c12'
+                                        : '#3498db';
+
+    const tooltip = document.createElement('div');
+    tooltip.className = `tooltip tooltip-${level}`;
+    tooltip.innerHTML = `<strong><i class="fa-solid ${icon}"></i> ${label}</strong><br>${msg}`;
+
+    wrapper.appendChild(i);
+    wrapper.appendChild(tooltip);
+    errorBar.appendChild(wrapper);
+}
+
+
+
+// Hook into any event that can change rules
+['change', 'drop', 'keyup'].forEach(evt =>
+    document.addEventListener(evt, updateErrorBar, true)
+);
+$(document)
+  .on('change', '.select2-allies', updateErrorBar)   // allies combobox
+  .on('change', '.select2-strategies', updateErrorBar);
+
+updateErrorBar(); // initial run
+
 
 window.getUpgradeData = stackName => currentStacks[stackName];
     window.setUpgradeData = (stackName, globalUpgrades, generalUpgrades) => {

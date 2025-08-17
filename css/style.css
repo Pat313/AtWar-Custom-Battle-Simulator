@@ -695,3 +695,115 @@ width: 40px;
   border: 1px solid #595c50 !important;
   color: #e6e6e6 !important;
 }
+
+.error-bar {
+    position: absolute;
+    top: 0;
+    right: calc(250px);
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 2px;
+    pointer-events: auto;
+    z-index: 1000;
+    align-items: center;
+    padding: 2px 0;
+}
+
+.error-bar .fa-icon {
+    font-size: 1.5em;
+    cursor: pointer;
+    margin: 0 4px;
+}
+
+.error-bar .fa-icon[data-tooltip] { position: relative; }
+
+.error-bar .fa-icon[data-label]:hover::after {
+  content: attr(data-label) "\A" attr(data-msg); /* line break */
+  white-space: pre-line;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #2b2d26;
+  border: 1px solid #595c50;
+  color: #f5f5f5;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  transform: translateY(6px);
+  max-width: 300px;
+  line-height: 1.4;
+}
+
+/* color the first line depending on severity */
+.error-bar .fa-icon[level="error"]:hover::after {
+  color: #e74c3c;
+}
+.error-bar .fa-icon[level="warning"]:hover::after {
+  color: #f39c12;
+}
+.error-bar .fa-icon[level="info"]:hover::after {
+  color: #3498db;
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: #2b2d26;
+  border: 1px solid #595c50;
+  color: #f5f5f5;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  line-height: 1.4;
+  max-width: 600px;
+  width: max-content;
+  min-width: 150px;
+  white-space: normal;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.tooltip-title {
+  font-weight: 600;       /* slightly bolder */
+  font-size: 14px;        /* a bit bigger than description */
+  display: block;
+  color: #f1c40f;         /* can change based on error level if needed */
+}
+
+.tooltip-description {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #f5f5f5;
+}
+
+.tooltip strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+/* Show on hover */
+.tooltip-wrapper:hover .tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Severity accent (label color) */
+.tooltip-error strong { color: #e74c3c; }
+.tooltip-warning strong { color: #f39c12; }
+.tooltip-info strong { color: #3498db; }
+

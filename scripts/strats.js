@@ -10,14 +10,14 @@ var strats = {
 		"ground_main_attack": { attack: -2, defence: 0, hp: 0, critical: 0, defbonus: [] },
 		"air_main_attack": { attack: -1, defence: 0, hp: 0, critical: 0, defbonus: [] },
 		"air_special_attack": { attack: 2, defence: 0, hp: 0, critical: 0, defbonus: [
-			{ unit_id: "Stealth", defbonus: 1 },
+			{ unit_id: "air_stealth", defbonus: 1 },
 		] },
 	},
 	"Desert Storm": {
 		"ground_main_defence": { attack: -1, defence: -1, hp: 0, critical: 0, defbonus: [] },
 		"ground_main_attack": { attack: -1, defence: -1, hp: 0, critical: 0, defbonus: [] },
 		"ground_stealth": { attack: -3, defence: 3, hp: 0, critical: 0, defbonus: [
-			{ unit_id: "Infantry", defbonus: -1 },
+			{ unit_id: "ground_main_defence", defbonus: -1 },
 		] },
 		"naval_stealth": { attack: -2, defence: 2, hp: 0, critical: 0, defbonus: [] },
 	},
@@ -87,7 +87,7 @@ var strats = {
 	"None": { },
 	"Perfect Defence": {
 		"ground_main_defence": { attack: 0, defence: 1, hp: 0, critical: 0, defbonus: [
-			{ unit_id: "Tanks", defbonus: 1 },
+			{ unit_id: "ground_main_attack", defbonus: 1 },
 		] },
 		"ground_secondary_defence": { attack: 0, defence: 1, hp: 0, critical: 2, defbonus: [] },
 		"ground_main_attack": { attack: -1, defence: 0, hp: 0, critical: -2, defbonus: [] },
