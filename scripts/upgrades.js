@@ -26,8 +26,9 @@ var upgrades = {
   },
   "Safer Transportation": {
     image: " img/upgrades/safer transportation.png",
-    description: "+3 HP for naval & air transport units.",
+    description: "+3 HP for transport units.",
     "air_transport": { attack: 0, defence: 0, hp: 3, critical: 0, defbonus: [] },
     "naval_transport": { attack: 0, defence: 0, hp: 3, critical: 0, defbonus: [] },
+    "ground_transport": { attack: 0, defence: 0, hp: 3, critical: 0, defbonus: [] },
   },
 };
