@@ -194,10 +194,31 @@
   <script src="scripts/generalUpgrades.js"></script>
   <script src="scripts/upgrades.js"></script>
   <script src="scripts/buildingBonus.js"></script>
-  <script src="scripts/sim.js"></script>
-  
-  <!-- UI -->
-  <script src="UI/settings-modal.js"></script>
-  <script src="UI/upgrades-modal.js"></script>
+
+<script>
+/* ---------- wait until units, strats, upgrades etc. are ready ---------- */
+function bootstrapWhenReady() {
+  if (typeof units === 'undefined' ||
+      typeof strats === 'undefined' ||
+      typeof upgrades === 'undefined' ||
+      typeof generalUpgrades === 'undefined') {
+    setTimeout(bootstrapWhenReady, 30);   // poll again soon
+    return;
+  }
+
+  // all globals are present – load the rest of the app
+  const sim = document.createElement('script');
+  sim.src = 'scripts/sim.js';
+  sim.onload = () => {
+    document.head.appendChild(Object.assign(document.createElement('script'), { src: 'UI/settings-modal.js' }));
+    document.head.appendChild(Object.assign(document.createElement('script'), { src: 'UI/upgrades-modal.js' }));
+  };
+  document.head.appendChild(sim);
+}
+
+// start polling once the DOM is ready
+document.addEventListener('DOMContentLoaded', bootstrapWhenReady);
+</script>
+
 </body>
 </html>
