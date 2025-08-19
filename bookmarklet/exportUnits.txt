@@ -1,1 +1,37 @@
-javascript:(function(){const u=atWar.Static.GameModule.$3$UnitsField.buckets,r=atWar.Static.GameModule.$3$UnitRolesField.buckets,p=atWar.Static.GameModule.MapData.Id,f=atWar.Static.GameModule.MapData.CreatorName+' - '+atWar.Static.GameModule.MapData.Name,e={};const m=Object.fromEntries(Object.values(u).map(a=>[[a[0].value.Id,a[0].value.Name]])),n=Object.fromEntries(Object.values(r).map(a=>[[a[0].value.Id,a[0].value.Name.toLowerCase().replace(/:/g,'').replace(/\s+/g,'_')]]));Object.values(u).forEach(a=>{const v=a[0].value,d=(v.UnitDefenceList||[]).filter(x=>x.AttackingUnitId).map(x=>({unit_id:m[x.AttackingUnitId]||x.AttackingUnitId.toString(),defbonus:x.DefenceBonus}));e[v.Name]={image:`https://atwar-game.com/games/getimage.php?url=maps/map-${p}/units/${v.Id}.jpg`,max_attack:v.MaxAttack,max_defence:v.MaxDefence,hp:v.HitPoints,crit:v.Crit,unit_role_id:n[v.UnitRoleId]||v.UnitRoleId,defbonus:d}});const l=document.createElement('a');l.href=URL.createObjectURL(new Blob(['window.units='+JSON.stringify(e,null,4)+';'],{type:'text/javascript'}));l.download=f+'.js';document.body.appendChild(l);l.click();document.body.removeChild(l)})();
+javascript:(function(){
+    const unitBucketsObj = atWar.Static.GameModule.$3$UnitsField.buckets;
+    const unitArray = Object.keys(unitBucketsObj)
+        .map(k=>unitBucketsObj[k][0])
+        .filter(u=>u&&u.value);
+    const unitIdNameMap = {};
+    unitArray.forEach(u=>{
+        const v=u.value;
+        unitIdNameMap[v.Id]=v.Name;
+    });
+    const roleBucketsObj = atWar.Static.GameModule.$3$UnitRolesField.buckets;
+    const unitRolesArray=Object.keys(roleBucketsObj).map(k=>roleBucketsObj[k][0]).filter(u=>u&&u.value);
+    const idNameMap={};
+    unitRolesArray.forEach(u=>{
+        const v=u.value;
+        const normalizedName=v.Name.toLowerCase().replace(/:/g,'').replace(/\s+/g,'_');
+        idNameMap[v.Id]=normalizedName;
+    });
+    const mapId=atWar.Static.GameModule.MapData.Id;
+    const extractedUnits={};
+    unitArray.forEach(u=>{
+        const v=u.value;
+        const defBonusList=(v.UnitDefenceList||[]).filter(d=>d.AttackingUnitId!==0).map(d=>({unit_id:unitIdNameMap[d.AttackingUnitId]||d.AttackingUnitId.toString(),defbonus:d.DefenceBonus}));
+        const unitRoleName=idNameMap[v.UnitRoleId]||v.UnitRoleId;
+        extractedUnits[v.Name]={image:`https://atwar-game.com/games/getimage.php?url=maps/map-${mapId}/units/${v.Id}.jpg`,max_attack:v.MaxAttack,max_defence:v.MaxDefence,hp:v.HitPoints,crit:v.Crit,unit_role_id:unitRoleName,defbonus:defBonusList};
+    });
+    const fileName=atWar.Static.GameModule.MapData.CreatorName+' - '+atWar.Static.GameModule.MapData.Name;
+    const fileContent='window.units='+JSON.stringify(extractedUnits,null,4)+';';
+    const blob=new Blob([fileContent],{type:'text/javascript'});
+    const link=document.createElement('a');
+    link.href=URL.createObjectURL(blob);
+    link.download=fileName+'.js';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+})();
