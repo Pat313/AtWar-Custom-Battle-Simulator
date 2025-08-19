@@ -13,7 +13,7 @@ function initPicker() {
     opt.value = opt.textContent = name;
     picker.appendChild(opt);
   });
-  picker.value = localStorage.getItem('aw_unitsFile') || '_Default Units.js';
+  picker.value = localStorage.getItem('aw_unitsFile') || '000 - Default Units.js';
   picker.querySelectorAll('option').forEach(opt =>
   opt.textContent = opt.value.replace(/\.js$/, '')
 );
