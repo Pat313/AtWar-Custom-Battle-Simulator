@@ -90,12 +90,43 @@ $('#loading-icon').show();          // show spinner
             var isDefending = stack.querySelector('input[name="is-defending"]').checked;
             var isInCity = stack.querySelector('input[name="in-city"]').checked;
             var isInDefenceLine = stack.querySelector('input[name="in-defence-line"]').checked;
-
             var stratId = $(stack).find('.select2-strategies').val();
             var currentStrategy = strats[stratId];
-            var hasGeneral = stack.querySelectorAll('tbody tr')
-                        .length && Array.from(stack.querySelectorAll('tbody tr'))
-                        .some(tr => generalIds.includes(tr.dataset.unitid));
+            // --- collect the same data that refreshStack uses ---
+            const enableUpgrades = stack.querySelector('input[name="enable-upgrades"]').checked;
+
+            // 1. count generals
+            let generalCount = 0;
+            stack.querySelectorAll('tbody tr').forEach(tr => {
+                if (generalIds.includes(tr.dataset.unitid)) {
+                    generalCount += Number(tr.querySelector('.quantity-cell').value || 1);
+                }
+            });
+
+            // 2. building buff (same code as in refreshStack)
+            const buildingBuff = { attack: 0, defence: 0, hp: 0, critical: 0, defbonus: [] };
+            const idsWithRole = new Set();
+            stack.querySelectorAll('tbody tr').forEach(tr => {
+                const id   = tr.dataset.unitid;
+                const role = units[id]?.unit_role_id;
+                if (buildingBonus[role]) idsWithRole.add(id);
+            });
+            idsWithRole.forEach(id => {
+                const role = units[id].unit_role_id;
+                const b    = buildingBonus[role];
+                buildingBuff.attack   += b.attack   || 0;
+                buildingBuff.defence  += b.defence  || 0;
+                buildingBuff.hp       += b.hp       || 0;
+                buildingBuff.critical += b.critical || 0;
+            });
+
+            // 3. chosen upgrades
+            const chosenUpgrades        = enableUpgrades
+                ? currentStacks[name].upgrades
+                : [];
+            const chosenGeneralUpgrades = enableUpgrades && generalCount > 0
+                ? currentStacks[name].generalUpgrades
+                : [];
 
             stack.querySelectorAll('tbody tr').forEach(function (unitRow) {
                 var unitId = unitRow.dataset.unitid;
@@ -132,7 +163,11 @@ $('#loading-icon').show();          // show spinner
                     currentStrategy,
                     isInCity,
                     isInDefenceLine,
-                    hasGeneral
+                    generalCount,
+                    enableUpgrades,
+                    buildingBuff,
+                    chosenUpgrades,
+                    chosenGeneralUpgrades
                 );
 
                 unitsMap[unitId].attack += improvement.attack;
@@ -353,26 +388,29 @@ if (improvement.defbonus && improvement.defbonus.length) {
 		};
 	}
 
+    function multiplyImprovement(imp, factor) {
+    if (!imp || factor === 1) return imp;
+    return {
+        attack:   (imp.attack   || 0) * factor,
+        defence:  (imp.defence  || 0) * factor,
+        hp:       (imp.hp       || 0) * factor,
+        critical: (imp.critical || 0) * factor,
+        defbonus: imp.defbonus || []   // defbonus is not additive per-general
+    };
+}
+
 	function getUnitImprovements(
     currentUnit,
     strategy,
     inCity,
     inDefenceLine,
-    hasGeneral,
+    generalCount,
     enableUpgrades,
     buildingBuff,
     chosenUpgrades,
     chosenGeneralUpgrades,
 ) {
     var improvement = $.extend({}, defaultImprovement);
-
-    // --- apply general & upgrades---
-    if (hasGeneral) {
-        improvement = mergeImprovement(improvement, generalUpgrades[ALL_UNITS_KEY]);
-        if (generalUpgrades[currentUnit.unit_role_id]) {
-            improvement = mergeImprovement(improvement, generalUpgrades[currentUnit.unit_role_id]);
-        }
-    }
 
     // --- apply strategy ---
     if (strategy) {
@@ -397,16 +435,23 @@ if (improvement.defbonus && improvement.defbonus.length) {
 }
 
 // --- apply general upgrades ---
-if (hasGeneral && Array.isArray(chosenGeneralUpgrades)) {
-  chosenGeneralUpgrades.forEach(key => {
+if (generalCount > 0) {
+    improvement = mergeImprovement(improvement, multiplyImprovement(generalUpgrades[ALL_UNITS_KEY], generalCount));
+        if (generalUpgrades[currentUnit.unit_role_id]) {
+            improvement = mergeImprovement(improvement, multiplyImprovement(generalUpgrades[currentUnit.unit_role_id], generalCount));
+        }
+
+        if (Array.isArray(chosenGeneralUpgrades)) {
+chosenGeneralUpgrades.forEach(key => {
     const bonusObj = generalUpgrades[key];
     if (!bonusObj) return;
 
     const bonus = bonusObj[currentUnit.unit_role_id] || bonusObj['*'];
     if (bonus) {
-      improvement = mergeImprovement(improvement, bonus);
+      improvement = mergeImprovement(improvement, multiplyImprovement(bonus, generalCount));
     }
   });
+        }
 }
 
 
@@ -444,8 +489,7 @@ improvement.defbonus.forEach(function (bonus) {
 	var currentStrategy = strats[stratId];
 	var isInCity = stackNode.find('input[name="in-city"]')[0].checked;
 	var isInDefenceLine = stackNode.find('input[name="in-defence-line"]')[0].checked;
-	var hasGeneral = Object.keys(currentStacks[stackName].units)
-                      .some(id => generalIds.includes(id));
+	var generalCount = 0;
 	var enableUpgrades = stackNode.find('input[name="enable-upgrades"]')[0].checked;
 
 	// Before refreshing, save unit count.
@@ -474,6 +518,14 @@ improvement.defbonus.forEach(function (bonus) {
 			.addEventListener('dragend', onRemoveUnit);
 	});
 
+    // General helper
+ stackNode.find('tbody tr').each(function () {
+        const unitId = $(this).data('unitid');
+        if (generalIds.includes(unitId)) {
+            generalCount += Number($(this).find('.quantity-cell').val() || 1);
+        }
+    });
+
 // Building buffs
 var idsWithRole = new Set();
 stackNode.find('tbody tr').each(function () {
@@ -500,7 +552,7 @@ var chosenUpgrades = enableUpgrades
     ? currentStacks[stackName].upgrades
     : [];
 
-var chosenGeneralUpgrades = (hasGeneral && enableUpgrades)
+var chosenGeneralUpgrades = (generalCount > 0 && enableUpgrades)
     ? currentStacks[stackName].generalUpgrades
     : [];
 
@@ -528,7 +580,7 @@ chosenUpgrades.forEach(key => {
 			currentStrategy,
 			isInCity,
 			isInDefenceLine,
-			hasGeneral,
+			generalCount,
 			enableUpgrades,
 			buildingBuff,
 			chosenUpgrades,
