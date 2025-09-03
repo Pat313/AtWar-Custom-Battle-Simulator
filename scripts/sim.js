@@ -138,13 +138,21 @@ $('#loading-icon').show();          // show spinner
                     return;
                 }
 
-                // Use unit ID as the key
+                const p  = Number(currentUnit.crit) / 100;   // 0‒1
+                const baseValue = isDefending
+                        ? Number(currentUnit.max_defence)   // defender → use defence
+                        : Number(currentUnit.max_attack);   // attacker → use attack
+
+                const map   = computeMapping(baseValue, p);  // adjustAtkCrit.js
+                const Mprime = Math.round(map.Mprime);
+                const qPct = Math.round(map.q * 100);
+
                 unitsMap[unitId] = {
-                    attack: Number(currentUnit.max_attack),
-                    defense: Number(currentUnit.max_defence),
-                    hp: Number(currentUnit.hp),
-                    critical: Number(currentUnit.crit),
-                    count: count,
+                    attack:  isDefending ? Number(currentUnit.max_attack) : Mprime,
+                    defense: isDefending ? Mprime : Number(currentUnit.max_defence),
+                    hp:      Number(currentUnit.hp),
+                    critical: qPct,         // <-- was currentUnit.crit
+                    count:    count,
                     defbonus: (function(bonuses) {
     if (!Array.isArray(bonuses)) return {};
     var result = {};
@@ -154,8 +162,7 @@ $('#loading-icon').show();          // show spinner
     });
     return result;
 })(currentUnit.defbonus)
-
-                };
+};
 
                 // Apply improvements
                 var improvement = getUnitImprovements(
@@ -170,19 +177,16 @@ $('#loading-icon').show();          // show spinner
                     chosenGeneralUpgrades
                 );
 
-                unitsMap[unitId].attack += improvement.attack;
-                unitsMap[unitId].defense += improvement.defence;
+                unitsMap[unitId].attack   += improvement.attack;
+                unitsMap[unitId].defense  += improvement.defence;
                 unitsMap[unitId].critical += improvement.critical;
-                unitsMap[unitId].hp += improvement.hp;
+                unitsMap[unitId].hp       += improvement.hp;
             });
 
             // Build enemies list
-            var enemies = [];
-            for (var allyName in currentStacks) {
-                if (name !== allyName && !allyMap[allyName + name]) {
-                    enemies.push(allyName);
-                }
-            }
+            const allNames = Object.keys(currentStacks);
+            const allies   = allyMap[name] || new Set();
+            const enemies  = allNames.filter(n => n !== name && !allies.has(n));
 
             stacks[name] = {
                 defending: isDefending,
@@ -764,27 +768,27 @@ stackNode.querySelector('input[name="is-defending"]')
 
     const onAllyChange = function () {
     const myName = $(this).closest('.stack').find('.stack-title').text();
-    const allies = new Set($(this).val() || []);
+    const newAllies = new Set($(this).val() || []);
 
-    /* ---------- keep allyMap bidirectional ---------- */
-    // 1. remove old links that no longer exist
-    Object.keys(allyMap).forEach(stack => {
-        if (stack === myName) return;
-        if (allyMap[stack].has(myName) && !allies.has(stack)) {
-            allyMap[stack].delete(myName);
+    // 1. bidirectional sync
+    const oldAllies = allyMap[myName] || new Set();
+
+    // 1a. remove dropped alliances
+    oldAllies.forEach(a => {
+        if (!newAllies.has(a)) {
+            updateAllyMap(myName, a, false);
         }
     });
 
-    // 2. add new links
-    allies.forEach(a => {
-        if (!allyMap[a]) allyMap[a] = new Set();
-        allyMap[a].add(myName);
+    // 1b. add new alliances
+    newAllies.forEach(a => {
+        if (!oldAllies.has(a)) {
+            updateAllyMap(myName, a, true);
+        }
     });
 
-    // 3. set own links
-    allyMap[myName] = allies;
-
-    refreshAllianceSelect();   // re-render combo-boxes
+    // 2. refresh UI
+    refreshAllianceSelect();
     updateErrorBar();
 };
 
